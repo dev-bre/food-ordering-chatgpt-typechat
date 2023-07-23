@@ -16,7 +16,6 @@ export const ChatBot: FC = () => {
     const messagesEndRef = useRef(null);
 
     const [currentAssistantMessage, setCurrentAssistantMessage] = useState("");
-    let currentProcessingMsg = "";
 
     const classNames = (...classes: string[]) => {
         return classes.filter(Boolean).join(' ')
@@ -25,7 +24,6 @@ export const ChatBot: FC = () => {
     const processOrderRequest = async () => {
 
         setIsProcessing(true);
-
         if (!chatInput.current) {
             setIsProcessing(false);
             return;
@@ -36,16 +34,12 @@ export const ChatBot: FC = () => {
             outgoingMessages.push(chatSession[0]);
         }
 
-        console.log(chatInput.current.value);
-
         chatSession.push({ role: "user", content: chatInput.current.value });
         outgoingMessages.push({ role: "user", content: chatInput.current.value });
-
         const tempArr: ChatMessage[] = [];
         for (const t of chatSession) {
             tempArr.push(t);
         }
-
         setChatSession([...tempArr]);
 
         fetch("http://localhost:4000/api/order-request", {
@@ -59,21 +53,19 @@ export const ChatBot: FC = () => {
             .then((result) => {
                 const order: any[] = [];
                 result.items.forEach((x: any) => {
-                    const product = x.product.name;
                     const options = x.product.options.map((opt: any) => { return {name: opt.name, quantity: opt.optionQuantity}; });
-                    order.push({product: product, options: options});
+                    order.push({product: x.product.name, options: options, size: x.product.size});
                 });
                 console.log(order);
 
                 const orderString: string[] = [];
                 order.forEach((x: any) => {
-                    orderString.push(`${x.product} with ${x.options.map((x: any) => `${x.quantity} ${x.name}`).join(" and ")}`);
+                    orderString.push(`${x.size} ${x.product} with ${x.options.map((x: any) => `${x.quantity === undefined ? "" : x.quantity} ${x.name}`).join(" and ")}`);
                 });
-                const resp = `You ordered: ${orderString}`;
+                const resp = `🎉🎉 Thanks for your order! 🎉🎉 \n\n ☕> ${orderString.join("\n ☕> ")}`;
                 tempArr.push({ role: "assistant", content: resp });
                 setChatSession([...tempArr]);
                 setCurrentAssistantMessage("");
-                currentProcessingMsg = "";
                 if (processingMessage.current)
                     processingMessage.current.innerText = "";
                 if (chatInput.current)

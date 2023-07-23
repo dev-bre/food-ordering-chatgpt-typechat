@@ -46,7 +46,6 @@ app.post("/api/order-request", async (req, res) => {
 
 const processOrder = async (cart: Cart) => {
     // add this to a queue or any other background process
-
     console.log(JSON.stringify(cart, undefined, 2));
 };
 
