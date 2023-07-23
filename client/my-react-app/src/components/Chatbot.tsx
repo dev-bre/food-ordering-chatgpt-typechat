@@ -6,11 +6,11 @@ type ChatMessage = {
     content: string
 };
 
-export const ChatBot : FC = () => {
+export const ChatBot: FC = () => {
 
     const [chatSession, setChatSession] = useState<ChatMessage[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
-    
+
     const processingMessage = useRef<HTMLParagraphElement>(null);
     const chatInput = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef(null);
@@ -52,7 +52,7 @@ export const ChatBot : FC = () => {
 
         fetch("http://localhost:4000/api/order-request", {
             method: "POST",
-            body: JSON.stringify(outgoingMessages),
+            body: JSON.stringify({ messages: outgoingMessages }),
             headers: {
                 "Content-Type": "application/json",
             },
@@ -74,44 +74,39 @@ export const ChatBot : FC = () => {
     return (
 
         <div className="flex min-h-full flex-1 flex-col justify-center overflow-hidden">
-
             <div className="divide-y divide-gray-200 overflow-hidden  flex  flex-col justify-between">
-
-
                 <div className="w-full h-full px-4 py-5 sm:p-6 mb-32">
-
-                    <ul role="list" className="mb-8  h-full">
-                        {chatSession.map((x, index) => (x.role !== 'system' ? <div>
-
-                            <li key={index}>
-                                <div className="relative pb-8">
-                                    {index !== chatSession.length - 1 ? (
-                                        <span className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
-                                    ) : null}
-                                    <div className="relative flex space-x-3">
-                                        <div>
-                                            <span className={classNames('h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white', x.role === 'user' ? 'bg-slate-600' : 'bg-orange-500')}>
-                                                {x.role === 'user' && <UserIcon className="h-5 w-5 text-white" aria-hidden="true" />}
-                                                {x.role === 'assistant' && <RocketLaunchIcon className="h-5 w-5 text-white" aria-hidden="true" />}
-                                            </span>
-                                        </div>
-                                        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1">
+                    <ul className="mb-8  h-full">
+                        {chatSession.map((x, index) =>
+                        (x.role !== 'system' ?
+                            <div key={index}>
+                                <li>
+                                    <div className="relative pb-8">
+                                        {index !== chatSession.length - 1 ? (
+                                            <span className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true" />
+                                        ) : null}
+                                        <div className="relative flex space-x-3">
                                             <div>
-                                                <p className="text-md text-gray-500" style={{ whiteSpace: "pre-wrap" }}>
-                                                    {x.content}
-                                                </p>
+                                                <span className={classNames('h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white', x.role === 'user' ? 'bg-slate-600' : 'bg-orange-500')}>
+                                                    {x.role === 'user' && <UserIcon className="h-5 w-5 text-white" aria-hidden="true" />}
+                                                    {x.role === 'assistant' && <RocketLaunchIcon className="h-5 w-5 text-white" aria-hidden="true" />}
+                                                </span>
+                                            </div>
+                                            <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1">
+                                                <div>
+                                                    <p className="text-md text-gray-500" style={{ whiteSpace: "pre-wrap" }}>
+                                                        {x.content}
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </li>
+                                </li>
+                            </div> : <div key={index}></div>))}
 
-
-                        </div> : <></>))}
-
-                        {isProcessing && (<li key={'assistant-msg'}>
+                        {isProcessing && (
+                        <li key={'assistant-msg'}>
                             <div className="relative pb-8">
-
                                 <div className="relative flex space-x-3">
                                     <div>
                                         <span className={classNames('h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white', 'bg-orange-500')}>
@@ -128,7 +123,6 @@ export const ChatBot : FC = () => {
                                 </div>
                             </div>
                         </li>)}
-
 
                         <div ref={messagesEndRef} />
                         {isProcessing && (
@@ -150,7 +144,7 @@ export const ChatBot : FC = () => {
                             name="textValue"
                             className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                             placeholder="your order here..."
-                        /> 
+                        />
                     </div>
                     <button
                         onClick={processOrderRequest}
