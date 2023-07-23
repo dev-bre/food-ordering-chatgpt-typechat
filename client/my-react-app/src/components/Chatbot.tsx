@@ -53,7 +53,7 @@ export const ChatBot: FC = () => {
             .then((result) => {
                 const order: any[] = [];
                 result.items.forEach((x: any) => {
-                    const options = x.product.options.map((opt: any) => { return {name: opt.name, quantity: opt.optionQuantity}; });
+                    const options = x.product.options ? x.product.options.map((opt: any) => { return {name: opt.name, quantity: opt.optionQuantity}; }) : [];
                     order.push({product: x.product.name, options: options, size: x.product.size});
                 });
                 console.log(order);
