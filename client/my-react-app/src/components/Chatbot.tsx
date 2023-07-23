@@ -41,8 +41,6 @@ export const ChatBot: FC = () => {
         chatSession.push({ role: "user", content: chatInput.current.value });
         outgoingMessages.push({ role: "user", content: chatInput.current.value });
 
-        chatInput.current.value = "";
-
         const tempArr: ChatMessage[] = [];
         for (const t of chatSession) {
             tempArr.push(t);
@@ -52,19 +50,34 @@ export const ChatBot: FC = () => {
 
         fetch("http://localhost:4000/api/order-request", {
             method: "POST",
-            body: JSON.stringify({ messages: outgoingMessages }),
+            body: JSON.stringify({ newMessage: chatInput.current.value }),
             headers: {
                 "Content-Type": "application/json",
             },
         })
             .then((res) => res.json())
             .then((result) => {
-                tempArr.push({ role: "assistant", content: result });
+                const order: any[] = [];
+                result.items.forEach((x: any) => {
+                    const product = x.product.name;
+                    const options = x.product.options.map((opt: any) => { return {name: opt.name, quantity: opt.optionQuantity}; });
+                    order.push({product: product, options: options});
+                });
+                console.log(order);
+
+                const orderString: string[] = [];
+                order.forEach((x: any) => {
+                    orderString.push(`${x.product} with ${x.options.map((x: any) => `${x.quantity} ${x.name}`).join(" and ")}`);
+                });
+                const resp = `You ordered: ${orderString}`;
+                tempArr.push({ role: "assistant", content: resp });
                 setChatSession([...tempArr]);
                 setCurrentAssistantMessage("");
                 currentProcessingMsg = "";
                 if (processingMessage.current)
                     processingMessage.current.innerText = "";
+                if (chatInput.current)
+                    chatInput.current.value = "";
             })
             .catch((err) => console.error(err))
             .finally(() => { setIsProcessing(false); });
