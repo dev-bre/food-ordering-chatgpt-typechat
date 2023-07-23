@@ -1,4 +1,4 @@
-import { FC, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { BarsArrowUpIcon, RocketLaunchIcon, UserIcon } from '@heroicons/react/24/solid';
 
 type ChatMessage = {
@@ -14,12 +14,40 @@ export const ChatBot: FC = () => {
     const processingMessage = useRef<HTMLParagraphElement>(null);
     const chatInput = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef(null);
-
+    const [showPremium, setShowPremium] = useState<boolean>(false);
     const [currentAssistantMessage, setCurrentAssistantMessage] = useState("");
+    const [userContext, setUserContext] =
+        useState<{}>({ username: 'a@switchfeat.com', isPremium: true });
 
     const classNames = (...classes: string[]) => {
         return classes.filter(Boolean).join(' ')
     }
+
+    useEffect(() => {
+        const formData = new FormData();
+        formData.append('flagKey', "premium-delivery");
+        formData.append('flagContext', JSON.stringify(userContext));
+        formData.append('correlationId', 'test correlation id');
+
+
+        const evaluateFlag = () => {
+            fetch(`http://localhost:4000/api/sdk/flag/`, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Access-Control-Allow-Credentials": "true",
+                    "Access-Control-Allow-Origin": "true"
+                },
+                body: formData
+            }).then(resp => {
+                return resp.json();
+            }).then(respJson => {
+                setShowPremium(respJson.data.match);
+            }).catch(error => { console.log(error); });
+        };
+        evaluateFlag();
+    }, [userContext]);
+
 
     const processOrderRequest = async () => {
 
@@ -29,13 +57,7 @@ export const ChatBot: FC = () => {
             return;
         }
 
-        const outgoingMessages: ChatMessage[] = [];
-        if (chatSession.length === 1) {
-            outgoingMessages.push(chatSession[0]);
-        }
-
         chatSession.push({ role: "user", content: chatInput.current.value });
-        outgoingMessages.push({ role: "user", content: chatInput.current.value });
         const tempArr: ChatMessage[] = [];
         for (const t of chatSession) {
             tempArr.push(t);
@@ -53,8 +75,8 @@ export const ChatBot: FC = () => {
             .then((result) => {
                 const order: any[] = [];
                 result.items.forEach((x: any) => {
-                    const options = x.product.options ? x.product.options.map((opt: any) => { return {name: opt.name, quantity: opt.optionQuantity}; }) : [];
-                    order.push({product: x.product.name, options: options, size: x.product.size});
+                    const options = x.product.options ? x.product.options.map((opt: any) => { return { name: opt.name, quantity: opt.optionQuantity }; }) : [];
+                    order.push({ product: x.product.name, options: options, size: x.product.size });
                 });
                 console.log(order);
 
@@ -108,28 +130,26 @@ export const ChatBot: FC = () => {
                                     </div>
                                 </li>
                             </div> : <div key={index}></div>))}
-
                         {isProcessing && (
-                        <li key={'assistant-msg'}>
-                            <div className="relative pb-8">
-                                <div className="relative flex space-x-3">
-                                    <div>
-                                        <span className={classNames('h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white', 'bg-orange-500')}>
-                                            <RocketLaunchIcon className="h-5 w-5 text-white" aria-hidden="true" />
-                                        </span>
-                                    </div>
-                                    <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1">
+                            <li key={'assistant-msg'}>
+                                <div className="relative pb-8">
+                                    <div className="relative flex space-x-3">
                                         <div>
-                                            <p ref={processingMessage} className="text-md text-gray-500" style={{ whiteSpace: "pre-wrap" }}>
-                                                {currentAssistantMessage}
-                                            </p>
+                                            <span className={classNames('h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white', 'bg-orange-500')}>
+                                                <RocketLaunchIcon className="h-5 w-5 text-white" aria-hidden="true" />
+                                            </span>
+                                        </div>
+                                        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1">
+                                            <div>
+                                                <p ref={processingMessage} className="text-md text-gray-500" style={{ whiteSpace: "pre-wrap" }}>
+                                                    {currentAssistantMessage}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </li>)}
-
-                        <div ref={messagesEndRef} />
+                            </li>)}
+                        < div ref={messagesEndRef} />
                         {isProcessing && (
                             <button type="button" className="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-white bg-indigo-500 hover:bg-indigo-400 transition ease-in-out duration-150 cursor-not-allowed" disabled>
                                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -142,6 +162,7 @@ export const ChatBot: FC = () => {
                     </ul>
                 </div>
                 <div className=" w-full bottom-0 mt-2 flex rounded-md   px-4 py-5 sm:p-6 bg-slate-50 fixed">
+                    {showPremium && <PremiumFeatures />}
                     <div className="relative flex flex-grow items-stretch focus-within:z-10 w-full">
                         <input
                             ref={chatInput}
@@ -162,5 +183,12 @@ export const ChatBot: FC = () => {
                 </div>
             </div>
         </div>
+    );
+};
+
+const PremiumFeatures: FC = () => {
+    return (
+        <>
+        </>
     );
 };
